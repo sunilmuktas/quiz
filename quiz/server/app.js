@@ -14,6 +14,7 @@ global.jwt = require('jsonwebtoken');
 global.ip = require("ip");
 var cors = require('cors');
 global.fs = require('fs');
+global.fileUpload = require('express-fileupload'),
 global.uuidv1 = require('uuid/v1');
 require('dotenv').config();
 // global.config = require('./dbconfig/dbconfig').config;
@@ -29,6 +30,7 @@ global.ResponseHelper = new ResponseHelper()
 app.use(bodyParser.json({ limit: '50mb', extended: true }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 app.use(cors(true));
+app.use(fileUpload())
 
 app.use(function (req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
@@ -41,6 +43,7 @@ app.use(function (req, res, next) {
 
 /* Start  new implementation*/
 app.use(require('./router/user'));
+app.use(require('./router/questions'));
 
 
 

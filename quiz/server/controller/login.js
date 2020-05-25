@@ -34,104 +34,85 @@ const STATUS = {
         'app_version':userdata.app_version,
         'created_on' : util.getCurrentTimeStamp()
     }
+    this.userInfo = {
+      'fname':'',
+      'lname' : '',
+      'city' : '',
+      'state' : '',
+      'gender' : '',
+      'email' :''
+    }
     this.created_on= util.getCurrentTimeStamp();
+   
     }
   }
 
 
-  export const loginUser = (request,response)=>{
-    __userLogin(request, response).then(loginRes => {
-        return loginRes;
-      })
-  }
+export const updateProfile = (request,response)=>{
+  __updateProfile(request, response).then(Res => {
+    return Res;
+  })
+}
 
 
-  const __userLogin = async (request,response)=> {
-    let loginData = new USERLOGIN(request.body);
-    let isUserExists = await loginModel.isUserExists(loginData.mobile)
-    console.log(isUserExists)
-    if(isUserExists[0]){
-        let otp = await __getOtp();
-        let userId = isUserExists[0].userId;
-        const otpRes=await TwoFactor.sendOTP(loginData.mobile, {otp: otp, template: 'otp'}).then((res) => {
-        
-         return STATUS.SUCCESS;
-         }, (err) => {
-           return err
-         })
-         await otpModel.updateOtp(otp, loginData.created_on, loginData.mobile)
-         if(otpRes==STATUS.SUCCESS){
-            let saveToken = await tokenModel.saveLoginToken(userId, token);
-            loginData.deviceInfo.device_token=token;
-            await registerModel.insertDeviceInfo(loginData.deviceInfo,userId);
-            response.send(ResponseHelper.buildSuccessResponse({},'Please Verify OTP Sent to registered Mobile Number.', STATUS.SUCCESS));
-         }
-         else{
-            response.send(ResponseHelper.buildSuccessResponse(otpRes,'Error sending OTP.', STATUS.FAILURE));  
-         }
+const __updateProfile = async(request,response)=>{
+  let userId = request.params.userId;
+  let userReq = request.body;
+  let userData = new USERLOGIN(request.body);
+  let userDetails = await loginModel.getUserDetails(userId);
+  console.log(userDetails)
+  if(userDetails) {
+    if(userReq.fname) {
+      userData.userInfo.fname = userReq.fname;
     }
-    else{
-        response.send(ResponseHelper.buildSuccessResponse({}, Messages.login.UserNotExists, STATUS.FAILURE));
+    else {
+      userData.userInfo.fname = userDetails[0].fname;
     }
-    
-  }
-
-
-  export const verifyLogin = (request,response)=>{
-    __verifyLogin(request, response).then(loginRes => {
-        return loginRes;
-      })
-  }
-
-
-
-  const __verifyLogin = async (request,response)=>{
-let otp= request.body.otp;
-let emailOrMobile = request.body.emailOrMobile;
-try {
-    let isExpired = await otpModel.isExpired(emailOrMobile);
-    if (isExpired.length > 0) {
-
-      let cuurentTime = Date.now(); //current time in miliseconds
-      let otpCreatedTime = Date.parse(isExpired[0].created_on); //otp timestamp in millisecond
-      let diffMili = cuurentTime - otpCreatedTime;
-      let diffSec = diffMili / 1000;
-      let diffmin = Math.floor(diffSec / 60); // Converting difference milisecond in minute
-
-      if (isExpired[0].isVerified) {
-        if(diffmin > 30){
-          let expOtp = await otpModel.doExpireOtp(emailOrMobile);
-          return response.send(ResponseHelper.buildSuccessResponse({}, 'Your OTP expired,Please Request New OTP', STATUS.FAILURE));
-        }
-        else{
-          let ResObj = await registerModel.getUserDetails(emailOrMobile);
-          return response.send(ResponseHelper.buildSuccessResponse(ResObj, 'OTP Already Verified ', STATUS.FAILURE));
-        }
-        
-      } else if (diffmin > 5) {
-        let expOtp = await otpModel.doExpireOtp(emailOrMobile);
-        return response.send(ResponseHelper.buildSuccessResponse({}, 'Your OTP expired,Please Request New OTP', STATUS.FAILURE));
-      } else {
-        if (otp == isExpired[0].otp) {
-           await otpModel.verifyOtp(util.getCurrentTimeStamp(), emailOrMobile);
-           await registerModel.activeAccount(emailOrMobile);
-          let ResObj = await registerModel.getUserDetails(emailOrMobile);
-
-          return response.send(ResponseHelper.buildSuccessResponse(ResObj, 'OTP Successfully Verified', STATUS.SUCCESS));
-        } else {
-          return response.send(ResponseHelper.buildSuccessResponse({}, 'Please Enter Correct OTP', STATUS.FAILURE));
-        }
-      }
-    } else {
-      return response.send(ResponseHelper.buildSuccessResponse({}, 'Please Enter Correct Email or Mobile', STATUS.FAILURE));
+    if(userReq.lname) {
+      userData.userInfo.lname = userReq.lname;
     }
-  }
-  catch (err) {
-    console.log(err);
-    return response.send(new Error('OTP verification Fail'));
-  }
+    else {
+      userData.userInfo.lname = userDetails[0].lname;
+    }
+    if(userReq.city) {
+      userData.userInfo.city = userReq.city;
+    }
+    else {
+      userData.userInfo.city = userDetails[0].city;
+    }if(userReq.state) {
+      userData.userInfo.state = userReq.state;
+    }
+    else {
+      userData.userInfo.state = userDetails[0].state;
+    }
+    if(userReq.gender) {
+      userData.userInfo.gender = userReq.gender;
+    }
+    else {
+      userData.userInfo.gender = userDetails[0].gender;
+    }
+    if(userReq.email) {
+      userData.userInfo.email = userReq.email;
+    }
+    else {
+      userData.userInfo.email = userDetails[0].email;
+    }
 
+   let updateProfileInfo =  await loginModel.updateProfile(userData.userInfo,userId)
+   if(updateProfileInfo) {
+    response.send(ResponseHelper.buildSuccessResponse({}, 'Profile Updated Successfully', STATUS.SUCCESS));
+   }
+   else {
+    response.send(ResponseHelper.buildSuccessResponse({}, 'Profile Updation failure', STATUS.FAILURE));
+   }
   }
+  else {
+    response.send(ResponseHelper.buildSuccessResponse({}, 'Something went wrong', STATUS.FAILURE));
+  }
+}
+
+
+
 
 
 
@@ -182,4 +163,44 @@ try {
       otp += digit[Math.floor(Math.random() * 10)];
     }
     return otp;
+  }
+
+
+  export const updateProfilePic = (request,response)=>{
+    __updateProfilePic(request, response).then(loginRes => {
+        return loginRes;
+      })
+  }
+
+  const __updateProfilePic = async (request,response)=>{
+    let userId = request.params.userId;
+    if(request.files){
+      let profile_pic = request.files.profile_pic;
+      let file_name = profile_pic.name;
+      if(profile_pic.mimetype == "image/jpeg" ||profile_pic.mimetype == "image/png"||profile_pic.mimetype == "image/gif"){
+
+        file.mv('public/images/upload_images/'+file.name, function(err) {              
+          if (err) {
+            response.send(ResponseHelper.buildSuccessResponse({},'Error while uploading Image.', STATUS.FAILURE));
+          }
+          else {
+            // await loginModel.getUserDetails(userId);
+         
+            // var sql = "INSERT INTO `users_image`(`first_name`,`last_name`,`mob_no`,`user_name`, `password` ,`image`) VALUES ('" + fname + "','" + lname + "','" + mob + "','" + name + "','" + pass + "','" + img_name + "')";
+            // var query = db.query(sql, function(err, result) {
+            //    res.redirect('profile/'+result.insertId);
+            // });
+          }
+            return res.status(500).send(err);
+        
+       });
+
+      }
+      else {
+        response.send(ResponseHelper.buildSuccessResponse({},'This format is not allowed,Please upload file with .png, .gif , .jpg', STATUS.FAILURE));
+      }
+    }
+    else {
+      response.send(ResponseHelper.buildSuccessResponse({},'No image uploaded', STATUS.FAILURE));
+    }
   }

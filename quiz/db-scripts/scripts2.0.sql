@@ -145,16 +145,53 @@ CREATE TABLE IF NOT EXISTS `quiz` (
   FOREIGN KEY (`created_by`) REFERENCES `user` (`userId`)
 );
 
--- Dumping data for table quiz.token: ~0 rows (approximately)
-/*!40000 ALTER TABLE `token` DISABLE KEYS */;
-/*!40000 ALTER TABLE `token` ENABLE KEYS */;
+
+
+CREATE TABLE `balance` (
+	`balance_id` INT(11) NOT NULL AUTO_INCREMENT,
+	`userId` INT(11) NOT NULL,
+	`cash_balance` INT(250) NULL DEFAULT NULL,
+	`token_balance` INT(250) NULL DEFAULT NULL,
+	`total_balance` INT(250) DEFAULT NULL AS (`cash_balance` + `token_balance`) virtual,
+	PRIMARY KEY (`balance_id`) USING BTREE,
+	INDEX `userId` (`userId`) USING BTREE,
+	CONSTRAINT `balance_ibfk_1` FOREIGN KEY (`userId`) REFERENCES `quiz`.`user` (`userId`) ON UPDATE RESTRICT ON DELETE RESTRICT
+)
+COLLATE='latin1_swedish_ci'
+ENGINE=InnoDB
+;
 
 
 
--- Dumping data for table quiz.user: ~0 rows (approximately)
-/*!40000 ALTER TABLE `user` DISABLE KEYS */;
-/*!40000 ALTER TABLE `user` ENABLE KEYS */;
+CREATE TABLE `rooms` (
+	`room_id` INT(11) NOT NULL AUTO_INCREMENT,
+	`room_type` ENUM('SINGLE','GROUP') NOT NULL DEFAULT 'SINGLE' COLLATE 'latin1_swedish_ci',
+	`entry_token` INT(11) NOT NULL DEFAULT '0',
+	`player_limit` INT(11) NOT NULL DEFAULT '0',
+	`time_limit` INT(11) NOT NULL DEFAULT '0',
+	`prize_token` INT(11) NOT NULL DEFAULT '0',
+	`created_by` INT(11) NOT NULL DEFAULT '0',
+	`created_on` DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
+	`updated_on` DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
+	PRIMARY KEY (`room_id`) USING BTREE,
+	INDEX `created_by` (`created_by`) USING BTREE,
+	CONSTRAINT `created_by` FOREIGN KEY (`created_by`) REFERENCES `quiz`.`user` (`userId`) ON UPDATE RESTRICT ON DELETE RESTRICT
+);
 
-/*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
-/*!40014 SET FOREIGN_KEY_CHECKS=IF(@OLD_FOREIGN_KEY_CHECKS IS NULL, 1, @OLD_FOREIGN_KEY_CHECKS) */;
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+CREATE TABLE `joined_rooms` (
+	`joined_room_id` INT(11) NOT NULL AUTO_INCREMENT,
+	`userId` INT(11) NOT NULL,
+	`room_id` INT(11) NOT NULL,
+	`created_on` DATETIME NULL DEFAULT current_timestamp(),
+	`updated_on` DATETIME NULL DEFAULT NULL ON UPDATE current_timestamp(),
+	PRIMARY KEY (`joined_room_id`) USING BTREE,
+	INDEX `userId` (`userId`) USING BTREE,
+	CONSTRAINT `userId` FOREIGN KEY (`userId`) REFERENCES `quiz`.`user` (`userId`) ON UPDATE RESTRICT ON DELETE RESTRICT,
+	INDEX `room_id` (`room_id`) USING BTREE,
+	CONSTRAINT `room_id` FOREIGN KEY (`room_id`) REFERENCES `quiz`.`rooms` (`room_id`) ON UPDATE RESTRICT ON DELETE RESTRICT
+)
+COLLATE='latin1_swedish_ci'
+ENGINE=InnoDB
+;
+
+

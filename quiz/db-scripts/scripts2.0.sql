@@ -1,18 +1,3 @@
--- --------------------------------------------------------
--- Host:                         127.0.0.1
--- Server version:               10.4.13-MariaDB - mariadb.org binary distribution
--- Server OS:                    Win64
--- HeidiSQL Version:             11.0.0.5919
--- --------------------------------------------------------
-
-/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
-/*!40101 SET NAMES utf8 */;
-/*!50503 SET NAMES utf8mb4 */;
-/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
-/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
-
-
--- Dumping database structure for quiz
 CREATE DATABASE IF NOT EXISTS `quiz` /*!40100 DEFAULT CHARACTER SET latin1 */;
 USE `quiz`;
 
@@ -44,8 +29,8 @@ CREATE TABLE IF NOT EXISTS `user` (
   `email` varchar(225) DEFAULT NULL,
   `isActive` tinyint(4) NOT NULL,
   `role_id` int(11) NOT NULL,
-  `created_on` datetime DEFAULT NULL,
-  `updated_on` datetime DEFAULT NULL,
+  	`created_on` DATETIME NULL DEFAULT current_timestamp(),
+	`updated_on` DATETIME NULL DEFAULT NULL ON UPDATE current_timestamp(),
   PRIMARY KEY (`userId`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
 
@@ -82,8 +67,8 @@ CREATE TABLE IF NOT EXISTS `otpvalidator` (
   `otp` varchar(10) NOT NULL,
   `isVerified` tinyint(4) DEFAULT 0,
   `isExpired` tinyint(4) DEFAULT 0,
-  `created_on` datetime NOT NULL,
-  `updated_on` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+  	`created_on` DATETIME NULL DEFAULT current_timestamp(),
+	`updated_on` DATETIME NULL DEFAULT NULL ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
 
@@ -152,7 +137,7 @@ CREATE TABLE `balance` (
 	`userId` INT(11) NOT NULL,
 	`cash_balance` INT(250) NULL DEFAULT NULL,
 	`token_balance` INT(250) NULL DEFAULT NULL,
-	`total_balance` INT(250) DEFAULT NULL AS (`cash_balance` + `token_balance`) virtual,
+	`total_balance` INT(250) AS (`cash_balance` + `token_balance`),
 	PRIMARY KEY (`balance_id`) USING BTREE,
 	INDEX `userId` (`userId`) USING BTREE,
 	CONSTRAINT `balance_ibfk_1` FOREIGN KEY (`userId`) REFERENCES `quiz`.`user` (`userId`) ON UPDATE RESTRICT ON DELETE RESTRICT
@@ -166,17 +151,19 @@ ENGINE=InnoDB
 CREATE TABLE `rooms` (
 	`room_id` INT(11) NOT NULL AUTO_INCREMENT,
 	`room_type` ENUM('SINGLE','GROUP') NOT NULL DEFAULT 'SINGLE' COLLATE 'latin1_swedish_ci',
+	`room_name` VARCHAR(225) NOT NULL COLLATE 'latin1_swedish_ci',
 	`entry_token` INT(11) NOT NULL DEFAULT '0',
 	`player_limit` INT(11) NOT NULL DEFAULT '0',
 	`time_limit` INT(11) NOT NULL DEFAULT '0',
 	`prize_token` INT(11) NOT NULL DEFAULT '0',
 	`created_by` INT(11) NOT NULL DEFAULT '0',
-	`created_on` DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
-	`updated_on` DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
+	`created_on` DATETIME NULL DEFAULT current_timestamp(),
+	`updated_on` DATETIME NULL DEFAULT NULL ON UPDATE current_timestamp(),
 	PRIMARY KEY (`room_id`) USING BTREE,
 	INDEX `created_by` (`created_by`) USING BTREE,
 	CONSTRAINT `created_by` FOREIGN KEY (`created_by`) REFERENCES `quiz`.`user` (`userId`) ON UPDATE RESTRICT ON DELETE RESTRICT
 );
+
 
 CREATE TABLE `joined_rooms` (
 	`joined_room_id` INT(11) NOT NULL AUTO_INCREMENT,
@@ -193,5 +180,4 @@ CREATE TABLE `joined_rooms` (
 COLLATE='latin1_swedish_ci'
 ENGINE=InnoDB
 ;
-
 
